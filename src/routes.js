@@ -24,7 +24,7 @@ router.addDefaultHandler(async ({ request, body, contentType, log, pushData }) =
     // name 필드 값으로 파일 이름 생성
     const fileName = `${cardId}-${data.name}.json`;
     // 저장 경로 (기존 dataset 경로에 맞춤)
-    const saveDir = path.join(process.cwd(), '..', 'datasets');
+    const saveDir = path.join(process.cwd(), '..', 'datasets', 'raw-data');
     if (!fs.existsSync(saveDir)) {
         fs.mkdirSync(saveDir, { recursive: true });
     }
