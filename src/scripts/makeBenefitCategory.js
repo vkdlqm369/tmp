@@ -9,10 +9,6 @@ const dirPath = path.join(__dirname, "../../datasets/raw-data");
 
 const files = fs.readdirSync(dirPath);
 
-let counts = { CRD: 0, CHK: 0, OTHER: 0 };
-
-const cTypes = new Set(); // c_type 값 저장용 Set
-const cTypeCounts = {};   // c_type별 개수 카운트
 const topBenefitPairs = new Set(); // (idx, title) pair 저장용
 
 for (const file of files) {

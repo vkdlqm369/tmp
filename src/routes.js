@@ -17,6 +17,10 @@ router.addDefaultHandler(async ({ request, body, contentType, log, pushData }) =
         return;
     }
 
+
+    console.log(data.idx)
+
+
     const urlParts = request.loadedUrl.split('/');
     const cardId = urlParts[urlParts.length - 1];
 
@@ -33,6 +37,7 @@ router.addDefaultHandler(async ({ request, body, contentType, log, pushData }) =
 
     // JSON을 예쁘게 저장
     fs.writeFileSync(savePath, JSON.stringify(data, null, 2), 'utf8');
+
 
     // 그대로 저장 (필드 선택 X)
     // await pushData({
