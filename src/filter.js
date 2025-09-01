@@ -2,12 +2,70 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
+
+const issuerMap = {
+    1: "SAMSUNG",
+    2: "SHINHAN",
+    3: "KOOKMIN",
+    4: "LOTTE",
+    5: "WOORI",
+    6: "CITI",
+    7: "HYUNDAI",
+    8: "HANA",
+    9: "NONGHYEOP",
+    10: "IBK_BC",
+    11: "JEIL",
+    12: "SSG",
+    13: "KBANK",
+    14: "KAKAOBANK",
+    15: "POST",
+    19: "DGB",
+    20: "BUSAN",
+    21: "KDBBANK",
+    22: "SAEMAUL",
+    23: "SAVINGBANK",
+    24: "SUHYEOP",
+    25: "GWANGJUBANK",
+    26: "KYOBO",
+    27: "SHINHYEOP",
+    28: "YUANTA",
+    29: "JEONBUKBANK",
+    30: "JEJUBANK",
+    31: "KAKAOPAY",
+    32: "BC",
+    33: "MIRAE",
+    34: "NH_INVESTMENT_AND_SECURITIES",
+    35: "KBS",
+    36: "KOREAINVEST",
+    44: "DB",
+    45: "SK",
+    46: "EUGENE",
+    47: "TOSSBANK",
+    48: "CHAI",
+    49: "FINT",
+    50: "FINNQ",
+    51: "PCP",
+    52: "KONA",
+    53: "TOSSBANK",
+    54: "IAURORA",
+    55: "HANPASS",
+    56: "DANAL",
+    57: "TRAVEL",
+    58: "MOBILIANS",
+    59: "HYANDAIDEPART",
+    63: "GYEONGNAM",
+    64: "NAVER",
+    65: "MONEYTREE",
+};
+
+
 // ===== 기본 경로 세팅 =====
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const inputDir = path.join(__dirname, "../datasets/raw-data"); // 원본 JSON 폴더
 const outputDir = path.join(__dirname, "../datasets/processed-data");       // 추출 결과 저장 폴더
+
 
 // 결과 폴더 생성
 if (!fs.existsSync(outputDir)) {
@@ -24,21 +82,15 @@ const extractFromItem = (item) => {
         type: item?.cate ?? null,
 
         // corp
-        issuer: {
-            idx: item?.corp?.idx ?? null,
-            name: item?.corp?.name ?? null,
-            name_eng: item?.corp?.name_eng ?? null,
-        },
+        issuer: issuerMap[item?.corp?.idx] ?? null,
 
         // 카드 기본
         name: item?.name ?? null,
 
         // brand[]
-        globalAcquirers: safeArr(item?.brand).map((b) => ({
-            idx: b?.idx ?? null,
-            name: b?.name ?? null,
-            code: b?.code ?? null,
-        })),
+        globalAcquirers: safeArr(item?.brand)
+            .map((br) => br?.name ?? ""),
+
 
         // 기타 상위 필드
         targetMonthlySpending: item?.pre_month_money ?? null,
@@ -48,47 +100,69 @@ const extractFromItem = (item) => {
         annual_fee_basic: item?.annual_fee_basic ?? null,
         annual_fee_detail: item?.annual_fee_detail ?? null,
 
-        // 이미지
-        card_img: item?.card_img
-            ? { name: item.card_img.name ?? null, url: item.card_img.url ?? null }
-            : null,
-        card_imgs: safeArr(item?.card_imgs).map((ci) => ({
-            id: ci?.id ?? ci?.idx ?? null,
-            name: ci?.name ?? null,
-            url: ci?.url ?? null,
-        })),
+        // 이미지는 따로 저장
 
-        // top_benefit
-        top_benefit: safeArr(item?.top_benefit).map((tb) => ({
-            idx: tb?.idx ?? null,
-            // 표에는 "tag"라고 표기되어 있었지만 실제 데이터는 "tags" 배열 → 둘 다 대응
-            tags: Array.isArray(tb?.tags) ? tb.tags : (tb?.tag ? [tb.tag] : []),
-            title: tb?.title ?? null,
-        })),
 
-        // 카드 혜택 유형
-        c_type: item?.c_type ?? null, // P/D/M 등
-
-        // search_benefit
-        search_benefit: safeArr(item?.search_benefit).map((sb) => ({
-            title: sb?.title ?? null,
-            value: sb?.value ?? null,
-            options: safeArr(sb?.options).map((opt) => ({
-                label: opt?.label ?? null,
-                value: opt?.value ?? null,
+        benefits: {
+            top: safeArr(item?.top_benefit).map((tb) => ({
+                tags: Array.isArray(tb?.tags) ? tb.tags : (tb?.tag ? [tb.tag] : []),
+                title: tb?.title ?? null,
             })),
-        })),
 
-        // key_benefit
-        key_benefit: safeArr(item?.key_benefit).map((kb) => ({
-            cate: {
-                idx: kb?.cate?.idx ?? null,
+            toc: safeArr(item?.search_benefit).map((sb) => ({
+                title: sb?.title ?? null,
+                sub_titles: safeArr(sb?.options)
+                    .map((opt) => opt?.label ?? "")
+                    .filter((s) => s)
+            })),
+
+            key: safeArr(item?.key_benefit)
+                .filter((kb) => kb?.cate?.idx !== 28)
+                .map((kb) => ({
+                    title: kb?.title ?? kb?.cate?.name ?? null, // 타이틀 없으면 cate.name 보조
+                    info_html: kb?.info ?? "",
+                    comment: kb?.comment ?? "",
+            })),
+        },
+
+        keyBenefits: safeArr(item?.key_benefit)
+            .filter((kb) => kb?.cate?.idx === 28)
+            .map((kb) => ({
                 title: kb?.title ?? kb?.cate?.name ?? null, // 타이틀 없으면 cate.name 보조
-            },
-            // !!여기 바꿔야 함.
-            info_html: kb?.info ?? "",
-            comment: kb?.comment ?? "",
-        })),
+                info_html: kb?.info ?? "",
+                comment: kb?.comment ?? "",
+            }))
+
+        // // top_benefit
+        // top_benefit: safeArr(item?.top_benefit).map((tb) => ({
+        //     idx: tb?.idx ?? null,
+        //     // 표에는 "tag"라고 표기되어 있었지만 실제 데이터는 "tags" 배열 → 둘 다 대응
+        //     tags: Array.isArray(tb?.tags) ? tb.tags : (tb?.tag ? [tb.tag] : []),
+        //     title: tb?.title ?? null,
+        // })),
+        //
+        // // 카드 혜택 유형
+        // c_type: item?.c_type ?? null, // P/D/M 등
+        //
+        // // search_benefit
+        // search_benefit: safeArr(item?.search_benefit).map((sb) => ({
+        //     title: sb?.title ?? null,
+        //     value: sb?.value ?? null,
+        //     options: safeArr(sb?.options).map((opt) => ({
+        //         label: opt?.label ?? null,
+        //         value: opt?.value ?? null,
+        //     })),
+        // })),
+        //
+        // // key_benefit
+        // key_benefit: safeArr(item?.key_benefit).map((kb) => ({
+        //     cate: {
+        //         idx: kb?.cate?.idx ?? null,
+        //         title: kb?.title ?? kb?.cate?.name ?? null, // 타이틀 없으면 cate.name 보조
+        //     },
+        //     info_html: kb?.info ?? "",
+        //     comment: kb?.comment ?? "",
+        // })),
     };
 };
 

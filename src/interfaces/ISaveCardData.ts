@@ -50,7 +50,7 @@ export interface KeyBenefit {
 }
 
 
-export interface inputInfo {
+export interface ISaveCardData {
     idx: number;
     cid: string;
     cate: "CRD" | "CHK";

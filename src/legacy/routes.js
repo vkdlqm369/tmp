@@ -17,7 +17,6 @@ router.addDefaultHandler(async ({ request, body, contentType, log, pushData }) =
         return;
     }
 
-
     console.log(data.idx)
 
 
@@ -28,7 +27,7 @@ router.addDefaultHandler(async ({ request, body, contentType, log, pushData }) =
     // name 필드 값으로 파일 이름 생성
     const fileName = `${cardId}-${data.name}.json`;
     // 저장 경로 (기존 dataset 경로에 맞춤)
-    const saveDir = path.join(process.cwd(), '..', 'datasets', 'raw-data');
+    const saveDir = path.join(process.cwd(), '..', 'datasets', 'raw-data2');
     if (!fs.existsSync(saveDir)) {
         fs.mkdirSync(saveDir, { recursive: true });
     }
@@ -37,44 +36,6 @@ router.addDefaultHandler(async ({ request, body, contentType, log, pushData }) =
 
     // JSON을 예쁘게 저장
     fs.writeFileSync(savePath, JSON.stringify(data, null, 2), 'utf8');
-
-
-    // 그대로 저장 (필드 선택 X)
-    // await pushData({
-    //     url: request.loadedUrl,
-    //     ...data,   // JSON의 모든 필드가 dataset에 들어감
-    // });
-
-    // await pushData([ JSON.parse(body) ], );
-
-    // // 필요 필드만 골라 저장 (원본도 raw로 함께 저장)
-    // const {
-    //     id,
-    //     name,
-    //     companyName,
-    //     brandName,
-    //     benefitSummary,
-    //     annualFee,
-    //     domesticOnly,
-    //     imageUrl,
-    //     urlHomepage,
-    //     urlApply,
-    // } = data || {};
-    //
-    // await pushData({
-    //     url: request.loadedUrl,
-    //     id,
-    //     name,
-    //     companyName,
-    //     brandName,
-    //     benefitSummary,
-    //     annualFee,
-    //     domesticOnly,
-    //     imageUrl,
-    //     urlHomepage,
-    //     urlApply,
-    //     raw: data,
-    // });
 
     log.info('Card JSON saved to dataset.');
 });

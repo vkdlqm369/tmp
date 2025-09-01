@@ -14,6 +14,7 @@ let counts = { CRD: 0, CHK: 0, OTHER: 0 };
 const cTypes = new Set(); // c_type 값 저장용 Set
 const cTypeCounts = {};   // c_type별 개수 카운트
 let cnt = 0;
+
 for (const file of files) {
     if (file.endsWith(".json")) {
         const filePath = path.join(dirPath, file);
@@ -62,24 +63,25 @@ for (const file of files) {
 
 
 
+
+// //
+//                 // 국내전용 금액
+//                 let domestic = 0;
+//                 const domesticMatch = item.annual_fee_basic.match(/국내전용\s*\[([0-9,]+)원?\]/);
+//                 if (domesticMatch) {
+//                     domestic = parseInt(domesticMatch[1].replace(/,/g, ""), 10) || 0;
+//                 }
 //
-                // 국내전용 금액
-                let domestic = 0;
-                const domesticMatch = item.annual_fee_basic.match(/국내전용\s*\[([0-9,]+)원?\]/);
-                if (domesticMatch) {
-                    domestic = parseInt(domesticMatch[1].replace(/,/g, ""), 10) || 0;
-                }
-
-// 해외겸용 금액
-                let abroad = 0;
-                const abroadMatch = item.annual_fee_basic.match(/해외겸용\s*\[([0-9,]+)원?\]/);
-                if (abroadMatch) {
-                    abroad = parseInt(abroadMatch[1].replace(/,/g, ""), 10) || 0;
-                }
-//
+// // 해외겸용 금액
+//                 let abroad = 0;
+//                 const abroadMatch = item.annual_fee_basic.match(/해외겸용\s*\[([0-9,]+)원?\]/);
+//                 if (abroadMatch) {
+//                     abroad = parseInt(abroadMatch[1].replace(/,/g, ""), 10) || 0;
+//                 }
+// //
 
 
-                console.log(item.idx, "domestic =", domestic, "abroad =", abroad);
+                // console.log(item.idx, "domestic =", domestic, "abroad =", abroad);
 
                 // console.log(item.idx, item.annual_fee_basic)
 
