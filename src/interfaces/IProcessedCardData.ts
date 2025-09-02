@@ -37,7 +37,7 @@ export interface IProcessedCardData {
     onlyOnline: boolean;
     // null 대신 -> "없음"
     annualFee: string;
-    annualFeeInternational: string | null;
+    annualFeeInternational: string ;
     c_type: "P" | "D" | "M";
     benefits: Benefits;
     notes : Detail[];

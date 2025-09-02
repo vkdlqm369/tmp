@@ -41,6 +41,7 @@ async function crawlerForNumberIds( url : string, numOfIds : number): Promise<vo
 }
 
 
+// 코드 재활용 시 이거 없애고, 외부에서 호출
 await crawlerForNumberIds("https://api.card-gorilla.com:8080/v1/cards", 3000);
 
 console.log("END!");

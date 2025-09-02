@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import he from "he";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,6 +15,55 @@ let counts = { CRD: 0, CHK: 0, OTHER: 0 };
 const cTypes = new Set(); // c_type 값 저장용 Set
 const cTypeCounts = {};   // c_type별 개수 카운트
 let cnt = 0;
+
+
+function decodeAndExtract(str) {
+    if (!str) return "";
+
+    // 1. 유니코드 이스케이프를 실제 문자로 변환
+    let decoded = str.replace(/\\u003C/g, "<").replace(/\\u003E/g, ">");
+
+    // 2. HTML 엔티티 디코딩 (예: &amp; → &)
+    decoded = he.decode(decoded);
+
+    // 3. <br>을 줄바꿈으로 교체
+    decoded = decoded.replace(/<br\s*\/?>/gi, "\n");
+
+    // 4. 남은 태그 제거
+    decoded = decoded.replace(/<[^>]*>/g, "");
+    decoded = decoded.replace(/Powered by Froala Editor/g, "").trim();
+    decoded = decoded.replace(/국내외겸용 | 국내외 겸용/g, "해외겸용").trim();
+
+    return decoded.trim();
+}
+
+function splitFees(s) {
+
+    const pureStr = decodeAndExtract(s)
+
+    const domesticIdx = pureStr.indexOf("국내전용");
+    const internationalIdx = pureStr.indexOf("해외겸용");
+
+    let domesticFee= "";
+    let internationalFee = "";
+
+    if (domesticIdx !== -1) {
+        if (internationalIdx !== -1) {
+            domesticFee = pureStr.slice(domesticIdx, internationalIdx).trim();
+        }
+        else {
+            domesticFee = pureStr;
+        }
+    }
+
+    if (internationalIdx !== -1) {
+        internationalFee = pureStr.slice(internationalIdx).trim();
+    }
+
+    return { domesticFee, internationalFee };
+}
+
+
 
 for (const file of files) {
     if (file.endsWith(".json")) {
@@ -31,6 +81,15 @@ for (const file of files) {
                 } else {
                     counts.OTHER++;
                 }
+
+                let {domesticFee ,internationalFee} = splitFees((item.annual_fee_detail));
+
+                console.log(item.idx, `${domesticFee} - ${internationalFee}`);
+            // let a = splitFees((item.annual_fee_detail))
+            //     console.log(item.idx, a.internationalFee);
+            // let a = splitFees((item.annual_fee_basic))
+            //     console.log(item.idx, a.domesticFee.replace("/", ""));
+                // console.log( item.idx, decodeAndExtract(item.annual_fee_detail));
 
                 // if (item.event !== null) {
                 //     console.log(`card id: ${item.idx}`);
@@ -61,22 +120,6 @@ for (const file of files) {
                 // if(s === item.cid)
                 //     cnt++;
 
-
-// //
-//                 // 국내전용 금액
-//                 let domestic = 0;
-//                 const domesticMatch = item.annual_fee_basic.match(/국내전용\s*\[([0-9,]+)원?\]/);
-//                 if (domesticMatch) {
-//                     domestic = parseInt(domesticMatch[1].replace(/,/g, ""), 10) || 0;
-//                 }
-//
-// // 해외겸용 금액
-//                 let abroad = 0;
-//                 const abroadMatch = item.annual_fee_basic.match(/해외겸용\s*\[([0-9,]+)원?\]/);
-//                 if (abroadMatch) {
-//                     abroad = parseInt(abroadMatch[1].replace(/,/g, ""), 10) || 0;
-//                 }
-// //
 
 
                 // console.log(item.idx, "domestic =", domestic, "abroad =", abroad);
