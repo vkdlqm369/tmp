@@ -62,8 +62,6 @@ for (const file of files) {
                 //     cnt++;
 
 
-
-
 // //
 //                 // 국내전용 금액
 //                 let domestic = 0;

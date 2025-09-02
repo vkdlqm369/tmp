@@ -1,7 +1,16 @@
+
+export interface LogoImg {
+    name: string;
+    url: string;
+}
+
+
 export interface Corp {
     idx: number;
     name: string;
     name_eng: string;
+    color: string | null;
+    logo_img: LogoImg;
 }
 
 export interface Brand {
@@ -22,7 +31,7 @@ export interface CardImgs {
 }
 
 export interface TopBenefit {
-    idx: number | undefined | "";
+    idx?: number |  string;
     tags: string[];
     title: string;
 }
@@ -50,7 +59,7 @@ export interface KeyBenefit {
 }
 
 
-export interface ISaveCardData {
+export interface IRawCardData {
     idx: number;
     cid: string;
     cate: "CRD" | "CHK";

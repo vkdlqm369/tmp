@@ -73,7 +73,7 @@ if (!fs.existsSync(outputDir)) {
 }
 
 
-const extractFromItem = (item) => {
+const filters = (item) => {
     const safeArr = (v) => (Array.isArray(v) ? v : []);
 
     return {
@@ -94,18 +94,21 @@ const extractFromItem = (item) => {
 
         // 기타 상위 필드
         targetMonthlySpending: item?.pre_month_money ?? null,
-        only_online: item?.only_online ?? null,
+
+        onlyOnline: item?.only_online ?? null,
 
         // 연회비(문자열 그대로 보존)
-        annual_fee_basic: item?.annual_fee_basic ?? null,
-        annual_fee_detail: item?.annual_fee_detail ?? null,
+        annualFee: item?.annual_fee_basic ?? null,
+        annualFeeInternational: item?.annual_fee_detail ?? null,
 
         // 이미지는 따로 저장
+
+        c_type: item?.c_type ?? null, // P/D/M 등
 
 
         benefits: {
             top: safeArr(item?.top_benefit).map((tb) => ({
-                tags: Array.isArray(tb?.tags) ? tb.tags : (tb?.tag ? [tb.tag] : []),
+                tags: tb.tags,
                 title: tb?.title ?? null,
             })),
 
@@ -116,7 +119,7 @@ const extractFromItem = (item) => {
                     .filter((s) => s)
             })),
 
-            key: safeArr(item?.key_benefit)
+            details: safeArr(item?.key_benefit)
                 .filter((kb) => kb?.cate?.idx !== 28)
                 .map((kb) => ({
                     title: kb?.title ?? kb?.cate?.name ?? null, // 타이틀 없으면 cate.name 보조
@@ -125,7 +128,7 @@ const extractFromItem = (item) => {
             })),
         },
 
-        keyBenefits: safeArr(item?.key_benefit)
+        notes: safeArr(item?.key_benefit)
             .filter((kb) => kb?.cate?.idx === 28)
             .map((kb) => ({
                 title: kb?.title ?? kb?.cate?.name ?? null, // 타이틀 없으면 cate.name 보조
@@ -142,7 +145,6 @@ const extractFromItem = (item) => {
         // })),
         //
         // // 카드 혜택 유형
-        // c_type: item?.c_type ?? null, // P/D/M 등
         //
         // // search_benefit
         // search_benefit: safeArr(item?.search_benefit).map((sb) => ({

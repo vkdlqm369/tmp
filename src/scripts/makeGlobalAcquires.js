@@ -37,7 +37,6 @@ for (const file of files) {
     }
 }
 
-
 const sortedPairs = Array.from(globalAcquirePairs).sort((a, b) => {
     const [idxA, titleA] = a.split("::");
     const [idxB, titleB] = b.split("::");

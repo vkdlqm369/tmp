@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const dirPath = path.join(__dirname, "../../datasets/raw-data");
-const saveDir = path.join(__dirname, "../../datasets/card-images2");
+const saveDir = path.join(__dirname, "../../datasets/card-images");
 
 const files = fs.readdirSync(dirPath);
 const errList = [];
