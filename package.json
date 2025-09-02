@@ -5,6 +5,7 @@
     "description": "This is an example of a Crawlee project.",
     "dependencies": {
         "crawlee": "^3.14.1",
+        "he": "^1.2.0",
         "sharp": "^0.34.3"
     },
     "scripts": {
@@ -14,6 +15,7 @@
     "author": "It's not you it's me",
     "license": "ISC",
     "devDependencies": {
+        "@types/he": "^1.2.3",
         "@types/node": "^24.3.0",
         "ts-node": "^10.9.2",
         "tsx": "^4.20.5",

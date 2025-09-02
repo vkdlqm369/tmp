@@ -82,9 +82,26 @@ for (const file of files) {
                     counts.OTHER++;
                 }
 
-                let {domesticFee ,internationalFee} = splitFees((item.annual_fee_detail));
 
-                console.log(item.idx, `${domesticFee} - ${internationalFee}`);
+
+                // 국내전용 금액
+                let domestic = 0;
+                const domesticMatch = item.annual_fee_basic.match(/국내전용\s*\[([0-9,]+)원?\]/);
+                if (domesticMatch) {
+                    domestic = parseInt(domesticMatch[1].replace(/,/g, ""), 10) || 0;
+                }
+
+                let abroad = 0;
+                const abroadMatch = item.annual_fee_basic.match(/해외겸용\s*\[([0-9,]+)원?\]/);
+                if (abroadMatch) {
+                    abroad = parseInt(abroadMatch[1].replace(/,/g, ""), 10) || 0;
+                }
+
+                // console.log(item.idx, item.annual_fee_basic);
+                console.log(item.idx, domestic, abroad);
+
+
+                // console.log(item.idx, `${domesticFee} - ${internationalFee}`);
             // let a = splitFees((item.annual_fee_detail))
             //     console.log(item.idx, a.internationalFee);
             // let a = splitFees((item.annual_fee_basic))

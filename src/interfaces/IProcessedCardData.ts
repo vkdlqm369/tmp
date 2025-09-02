@@ -36,8 +36,9 @@ export interface IProcessedCardData {
     targetMonthlySpending: number;
     onlyOnline: boolean;
     // null 대신 -> "없음"
-    annualFee: string;
-    annualFeeInternational: string ;
+    annualFee: number;
+    annualFeeInternational: number;
+    annualFeeDetail: string | null;
     c_type: "P" | "D" | "M";
     benefits: Benefits;
     notes : Detail[];

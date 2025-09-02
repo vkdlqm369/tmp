@@ -105,64 +105,27 @@ async function downloadRotateAndSave(url: string, destPath: string ) {
 }
 
 
-function splitFees(s: string): { domesticFee: string ; internationalFee: string } {
-
-
-    const pureStr = decodeAndExtract(s)
-
-
-    const domesticIdx = pureStr.indexOf("국내전용");
-    const internationalIdx = pureStr.indexOf("해외겸용");
-
-    let domesticFee= "";
-    let internationalFee = "";
-
-    if (domesticIdx !== -1) {
-        if (internationalIdx !== -1) {
-            domesticFee = pureStr.slice(domesticIdx, internationalIdx).trim();
-        } else {
-            domesticFee = pureStr.slice(domesticIdx).trim();
-
-        }
-    }
-    else{
-        internationalFee = pureStr;
-        return { domesticFee, internationalFee };
-    }
-
-
-    if (internationalIdx !== -1) {
-        internationalFee = pureStr.slice(internationalIdx).trim();
-    }
-    else{
-        domesticFee = pureStr;
-    }
-
-    return { domesticFee, internationalFee };
-}
-
-
-function decodeAndExtract(str : string) {
-    if (!str) return "";
-
-    // 1. 유니코드 이스케이프를 실제 문자로 변환
-    let decoded = str.replace(/\\u003C/g, "<").replace(/\\u003E/g, ">");
-
-    // 2. HTML 엔티티 디코딩 (예: &amp; → &)
-    decoded = he.decode(decoded);
-
-    // 3. <br>을 줄바꿈으로 교체
-    decoded = decoded.replace(/<br\s*\/?>/gi, "\n");
-
-    // 4. 남은 태그 제거
-    decoded = decoded.replace(/<[^>]*>/g, "");
-    decoded = decoded.replace(/Powered by Froala Editor/g, "").trim();
-    decoded = decoded.replace(/국내외겸용|국내외 겸용/g, "해외겸용").trim();
-
-    return decoded.trim();
-}
-
-
+// function decodeAndExtract(str : string) {
+//     if (!str) return "";
+//
+//     // 1. 유니코드 이스케이프를 실제 문자로 변환
+//     let decoded = str.replace(/\\u003C/g, "<").replace(/\\u003E/g, ">");
+//
+//     // 2. HTML 엔티티 디코딩 (예: &amp; → &)
+//     decoded = he.decode(decoded);
+//
+//     // 3. <br>을 줄바꿈으로 교체
+//     decoded = decoded.replace(/<br\s*\/?>/gi, "\n");
+//
+//     // 4. 남은 태그 제거
+//     decoded = decoded.replace(/<[^>]*>/g, "");
+//     decoded = decoded.replace(/Powered by Froala Editor/g, "").trim();
+//     decoded = decoded.replace(/국내외겸용|국내외 겸용/g, "해외겸용").trim();
+//     decoded = decoded.replace(/K-WORLD/g, "국내전용").trim();
+//
+//     return decoded.trim();
+// }
+//
 
 
 export const extractData = (item: IRawCardData): any => {
@@ -170,14 +133,17 @@ export const extractData = (item: IRawCardData): any => {
     let domesticFee = "";
     let internationalFee = "";
 
-    if(item.annual_fee_detail === null) {
-        ({ domesticFee, internationalFee } = splitFees(item.annual_fee_basic));
-        domesticFee = domesticFee.replace("/", "");
-    }
-    else{
-        ({ domesticFee, internationalFee } = splitFees(item.annual_fee_detail));
+    let domestic = 0;
+    const domesticMatch = item.annual_fee_basic.match(/국내전용\s*\[([0-9,]+)원?\]/);
+    if (domesticMatch) {
+        domestic = parseInt(domesticMatch[1].replace(/,/g, ""), 10) || 0;
     }
 
+    let abroad = 0;
+    const abroadMatch = item.annual_fee_basic.match(/해외겸용\s*\[([0-9,]+)원?\]/);
+    if (abroadMatch) {
+        abroad = parseInt(abroadMatch[1].replace(/,/g, ""), 10) || 0;
+    }
 
     const processedData: IProcessedCardData = {
         catalogId: item?.idx ?? null,
@@ -198,9 +164,9 @@ export const extractData = (item: IRawCardData): any => {
         onlyOnline: item?.only_online ?? null,
 
         // 연회비(문자열 그대로 보존)
-        annualFee: domesticFee,
-        annualFeeInternational: internationalFee,
-
+        annualFee: domestic,
+        annualFeeInternational: abroad,
+        annualFeeDetail: item.annual_fee_detail,
         // 이미지는 따로 저장
 
         c_type: item?.c_type ?? null, // P/D/M 등
@@ -245,20 +211,19 @@ export const extractData = (item: IRawCardData): any => {
         "utf-8"
     );
 
-    // // url 같으면 skip 하는 메커니즘 고려??
-    // // 대표 이미지 저장
-    // (async () => {
-    //     if (!Array.isArray(item.card_img)) {
-    //         await downloadRotateAndSave(item.card_img.url,   outputCardImageDir + '/' +`${item.idx.toString()}card_0${path.extname(item.card_img.name)}`);
-    //     }
-    // })();
-    //
-    // // 상세 이미지 저장
-    // (async () => {
-    //     for(const [suf ,tb] of item.card_imgs.entries()) {
-    //         await downloadRotateAndSave(tb.url,   outputCardImageDir + '/' +`${item.idx.toString()}card_${suf+1}${path.extname(tb.name)}`);
-    //     }
-    // })();
+    // 대표 이미지 저장
+    (async () => {
+        if (!Array.isArray(item.card_img)) {
+            await downloadRotateAndSave(item.card_img.url,   outputCardImageDir + '/' +`${item.idx.toString()}card_0${path.extname(item.card_img.name)}`);
+        }
+    })();
+
+    // 상세 이미지 저장
+    (async () => {
+        for(const [suf ,tb] of item.card_imgs.entries()) {
+            await downloadRotateAndSave(tb.url,   outputCardImageDir + '/' +`${item.idx.toString()}card_${suf+1}${path.extname(tb.name)}`);
+        }
+    })();
 };
 
 

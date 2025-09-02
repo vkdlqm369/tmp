@@ -9,10 +9,7 @@ const config = new Configuration({
 });
 
 
-async function crawlerForNumberIds( url : string, numOfIds : number): Promise<void> {
-
-    const ids: number[] = Array.from({ length: numOfIds }, (_, i) => i + 1);
-    // const ids: number[] = Array.from({ length: 15 - 10 + 1 }, (_, i) => i + 10);
+async function crawlerForNumberIds( url : string, ids : string[]): Promise<void> {
 
     const startUrls: string[] = ids.map((id) => `${url}/${id}`);
 
@@ -41,8 +38,11 @@ async function crawlerForNumberIds( url : string, numOfIds : number): Promise<vo
 }
 
 
+const cardGorillaIds = Array.from({ length: 3000 }, (_, i) => (i + 1).toString());
+
 // 코드 재활용 시 이거 없애고, 외부에서 호출
-await crawlerForNumberIds("https://api.card-gorilla.com:8080/v1/cards", 3000);
+// 저장할 내용 routes에서 구현해야함
+await crawlerForNumberIds("https://api.card-gorilla.com:8080/v1/cards", cardGorillaIds);
 
 console.log("END!");
 
