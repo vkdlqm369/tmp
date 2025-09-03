@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import he from "he";
+import {aborted} from "node:util";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,21 +85,23 @@ for (const file of files) {
 
 
 
-                // 국내전용 금액
-                let domestic = 0;
-                const domesticMatch = item.annual_fee_basic.match(/국내전용\s*\[([0-9,]+)원?\]/);
-                if (domesticMatch) {
-                    domestic = parseInt(domesticMatch[1].replace(/,/g, ""), 10) || 0;
-                }
+                console.log(item.idx, item.annual_fee_basic);
 
-                let abroad = 0;
-                const abroadMatch = item.annual_fee_basic.match(/해외겸용\s*\[([0-9,]+)원?\]/);
-                if (abroadMatch) {
-                    abroad = parseInt(abroadMatch[1].replace(/,/g, ""), 10) || 0;
-                }
-
-                // console.log(item.idx, item.annual_fee_basic);
-                console.log(item.idx, domestic, abroad);
+                // // 국내전용 금액
+                // let domestic = 0;
+                // const domesticMatch = item.annual_fee_basic.match(/국내전용\s*\[([0-9,]+)원?\]/);
+                // if (domesticMatch) {
+                //     domestic = parseInt(domesticMatch[1].replace(/,/g, ""), 10) || 0;
+                // }
+                //
+                // let abroad = 0;
+                // const abroadMatch = item.annual_fee_basic.match(/해외겸용\s*\[([0-9,]+)원?\]/);
+                // if (abroadMatch) {
+                //     abroad = parseInt(abroadMatch[1].replace(/,/g, ""), 10) || 0;
+                // }
+                //
+                // // console.log(item.idx, item.annual_fee_basic);
+                // console.log(item.idx, domestic, abroad);
 
 
                 // console.log(item.idx, `${domesticFee} - ${internationalFee}`);

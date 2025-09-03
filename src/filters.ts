@@ -130,20 +130,14 @@ async function downloadRotateAndSave(url: string, destPath: string ) {
 
 export const extractData = (item: IRawCardData): any => {
 
-    let domesticFee = "";
-    let internationalFee = "";
+    const annualFeeWithEdgeCase = item.annual_fee_basic.replace("해외전용", "해외겸용");
 
-    let domestic = 0;
-    const domesticMatch = item.annual_fee_basic.match(/국내전용\s*\[([0-9,]+)원?\]/);
-    if (domesticMatch) {
-        domestic = parseInt(domesticMatch[1].replace(/,/g, ""), 10) || 0;
-    }
+    const domesticMatch = annualFeeWithEdgeCase.match(/국내전용\s*\[([0-9,]+)원?\]/);
+    const domestic = (domesticMatch) ? parseInt(domesticMatch[1].replace(/,/g, ""), 10) : null;
 
-    let abroad = 0;
-    const abroadMatch = item.annual_fee_basic.match(/해외겸용\s*\[([0-9,]+)원?\]/);
-    if (abroadMatch) {
-        abroad = parseInt(abroadMatch[1].replace(/,/g, ""), 10) || 0;
-    }
+    const abroadMatch = annualFeeWithEdgeCase.match(/해외겸용\s*\[([0-9,]+)원?\]/);
+    const abroad = (abroadMatch) ? parseInt(abroadMatch[1].replace(/,/g, ""), 10) : null;
+
 
     const processedData: IProcessedCardData = {
         catalogId: item?.idx ?? null,
