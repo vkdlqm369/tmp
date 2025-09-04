@@ -6,6 +6,9 @@ import sharp from "sharp";
 import {IRawCardData, KeyBenefit, SearchBenefit, TopBenefit} from "./interfaces/IRawCardData";
 import { IProcessedCardData} from "./interfaces/IProcessedCardData";
 
+import { PrismaClient } from '@prisma/client';
+export const prisma = new PrismaClient();
+
 const issuerMap: Record<number, string> = {
     1: "SAMSUNG",
     2: "SHINHAN",
@@ -60,6 +63,18 @@ const issuerMap: Record<number, string> = {
     64: "NAVER",
     65: "MONEYTREE",
 };
+
+const globalAcquirerMap: Record<string, string> = {
+    "AMEX" : "AMEX",
+    "BC" : "BC",
+    "BC Global" : "BC",
+    "Diners Club" : "DINERS",
+    "JCB":"JCB",
+    "Mastercard":  "MASTER",
+    "UnionPay" : "UNIONPAY",
+    "VISA": "VISA"
+}
+
 
 // ===== 기본 경로 세팅 =====
 const __filename = fileURLToPath(import.meta.url);
@@ -126,7 +141,7 @@ async function downloadRotateAndSave(url: string, destPath: string ) {
 //
 
 
-export const extractData = (item: IRawCardData): any => {
+export const extractData = async (item: IRawCardData): Promise<void> => {
 
     const annualFeeWithEdgeCase = item.annual_fee_basic.replace("해외전용", "해외겸용").replace("국내외겸용", "해외겸용");
 
@@ -137,72 +152,169 @@ export const extractData = (item: IRawCardData): any => {
     const abroadMatch = annualFeeWithEdgeCase.match(/해외겸용\s*\[([0-9,]+)원?\]/);
     const abroad = (abroadMatch) ? parseInt(abroadMatch[1].replace(/,/g, ""), 10) : null;
 
+    const bucketUrl = "https://storage.googleapis.com/static.candypay.co.kr/card_images/"
+    const imgUrls = [];
 
-    const processedData: IProcessedCardData = {
-        catalogId: item?.idx ?? null,
-        type: item?.cate,
+    if(Array.isArray(item.card_img) !== true){
+        imgUrls.push(bucketUrl + item.idx.toString() +  "_0" + path.extname(item.card_img.name));
+    }
 
-        // corp
-        issuer: issuerMap[item?.corp?.idx] ?? null,
+    for(const [suf ,tb] of item.card_imgs.entries()) {
+        imgUrls.push(bucketUrl + item.idx.toString() + `_${suf+1}` + path.extname(tb.name));
+    }
 
-        // 카드 기본
-        name: item?.name ?? null,
 
-        // brand[]
-        globalAcquirers: safeArr(item?.brand).map((br: any) => br?.name ?? ""),
 
-        // 기타 상위 필드
-        targetMonthlySpending: item?.pre_month_money ?? null,
-
-        onlyOnline: item?.only_online ?? null,
-
-        // 연회비(문자열 그대로 보존)
-        annualFee: domestic,
-        annualFeeInternational: abroad,
-        annualFeeDetail: item.annual_fee_detail,
-        // 이미지는 따로 저장
-
-        c_type: item?.c_type ?? null, // P/D/M 등
-
-        benefits: {
-            top: safeArr<TopBenefit>(item?.top_benefit).map((tb) => ({
-                tags: tb.tags,
-                title: tb?.title ?? "",
-            })),
-
-            toc: safeArr<SearchBenefit>(item?.search_benefit).map((sb) => ({
-                title: sb?.title ?? "",
-                sub_titles: safeArr(sb?.options)
-                    .map((opt: any) => opt?.label ?? "")
-                    .filter((s: string) => s),
-            })),
-
-            details: safeArr<KeyBenefit>(item?.key_benefit)
-                .filter((kb) => kb?.cate?.idx !== 28)
+// === Prisma insert ===
+    await prisma.cardCatalogs.upsert({
+        where: { id: item.idx }, // 이미 있으면 update, 없으면 create
+        update: {
+            name: item.name ?? "",
+            type: item.cate ?? null,
+            imgUrls: imgUrls,
+            companyCode: issuerMap[item.corp?.idx],
+            preMonthSpending: item.pre_month_money ?? null,
+            benefits: {
+                top: safeArr<TopBenefit>(item.top_benefit).map((tb) => ({
+                    tags: tb.tags,
+                    title: tb?.title ?? "",
+                })),
+                toc: safeArr<SearchBenefit>(item.search_benefit).map((sb) => ({
+                    title: sb?.title ?? "",
+                    sub_titles: safeArr(sb?.options)
+                        .map((opt: any) => opt?.label ?? "")
+                        .filter((s: string) => s),
+                })),
+                details: safeArr<KeyBenefit>(item.key_benefit)
+                    .filter((kb) => kb?.cate?.idx !== 28)
+                    .map((kb) => ({
+                        title: kb?.title ?? kb?.cate?.name ?? null,
+                        info_html: kb?.info ?? "",
+                        comment: kb?.comment ?? "",
+                    })),
+            },
+            globalAcquirers: safeArr(item.brand).map((br: any) => globalAcquirerMap[br?.name] ?? ""),
+            onlyOnline: item.only_online ?? false,
+            annualFee: domestic,
+            annualFeeInternational: abroad,
+            annualFeeDetail: item.annual_fee_detail ?? null,
+            benefitType: item.c_type ?? null,
+            notes: safeArr<KeyBenefit>(item.key_benefit)
+                .filter((kb) => kb?.cate?.idx === 28)
                 .map((kb) => ({
-                    title: kb?.title ?? kb?.cate?.name ?? null, // 타이틀 없으면 cate.name 보조
+                    title: kb?.title ?? kb?.cate?.name ?? null,
                     info_html: kb?.info ?? "",
                     comment: kb?.comment ?? "",
                 })),
         },
+        create: {
+            id: item.idx,
+            name: item.name ?? "",
+            type: item.cate ?? null,
+            imgUrls: safeArr(item.card_imgs).map((img: any) => img.url ?? ""),
+            companyCode: issuerMap[item.corp?.idx] ?? null,
+            preMonthSpending: item.pre_month_money ?? null,
+            benefits: {
+                top: safeArr<TopBenefit>(item.top_benefit).map((tb) => ({
+                    tags: tb.tags,
+                    title: tb?.title ?? "",
+                })),
+                toc: safeArr<SearchBenefit>(item.search_benefit).map((sb) => ({
+                    title: sb?.title ?? "",
+                    sub_titles: safeArr(sb?.options)
+                        .map((opt: any) => opt?.label ?? "")
+                        .filter((s: string) => s),
+                })),
+                details: safeArr<KeyBenefit>(item.key_benefit)
+                    .filter((kb) => kb?.cate?.idx !== 28)
+                    .map((kb) => ({
+                        title: kb?.title ?? kb?.cate?.name ?? null,
+                        info_html: kb?.info ?? "",
+                        comment: kb?.comment ?? "",
+                    })),
+            },
+            globalAcquirers: safeArr(item.brand).map((br: any) => br?.name ?? ""),
+            onlyOnline: item.only_online ?? false,
+            annualFee: domestic,
+            annualFeeInternational: abroad,
+            annualFeeDetail: item.annual_fee_detail ?? null,
+            benefitType: item.c_type ?? null,
+            notes: safeArr<KeyBenefit>(item.key_benefit)
+                .filter((kb) => kb?.cate?.idx === 28)
+                .map((kb) => ({
+                    title: kb?.title ?? kb?.cate?.name ?? null,
+                    info_html: kb?.info ?? "",
+                    comment: kb?.comment ?? "",
+                })),
+        },
+    });
 
-        notes: safeArr<KeyBenefit>(item?.key_benefit)
-            .filter((kb) => kb?.cate?.idx === 28)
-            .map((kb) => ({
-                title: kb?.title ?? kb?.cate?.name ?? null, // 타이틀 없으면 cate.name 보조
-                info_html: kb?.info ?? "",
-                comment: kb?.comment ?? "",
-            })),
-    };
 
-    // Data 저장
-    const fileName = `${item.idx}-${item.name}.json`;
-
-    fs.writeFileSync(
-        path.join(outputCardDataDir, fileName),
-        JSON.stringify(processedData, null, 2),
-        "utf-8"
-    );
+    // const processedData: IProcessedCardData = {
+    //     catalogId: item?.idx ?? null,
+    //     type: item?.cate,
+    //
+    //     // corp
+    //     issuer: issuerMap[item?.corp?.idx] ?? null,
+    //
+    //     // 카드 기본
+    //     name: item?.name ?? null,
+    //
+    //     // brand[]
+    //     globalAcquirers: safeArr(item?.brand).map((br: any) => br?.name ?? ""),
+    //
+    //     // 기타 상위 필드
+    //     targetMonthlySpending: item?.pre_month_money ?? null,
+    //
+    //     onlyOnline: item?.only_online ?? null,
+    //
+    //     // 연회비(문자열 그대로 보존)
+    //     annualFee: domestic,
+    //     annualFeeInternational: abroad,
+    //     annualFeeDetail: item.annual_fee_detail,
+    //     // 이미지는 따로 저장
+    //
+    //     c_type: item?.c_type ?? null, // P/D/M 등
+    //
+    //     benefits: {
+    //         top: safeArr<TopBenefit>(item?.top_benefit).map((tb) => ({
+    //             tags: tb.tags,
+    //             title: tb?.title ?? "",
+    //         })),
+    //
+    //         toc: safeArr<SearchBenefit>(item?.search_benefit).map((sb) => ({
+    //             title: sb?.title ?? "",
+    //             sub_titles: safeArr(sb?.options)
+    //                 .map((opt: any) => opt?.label ?? "")
+    //                 .filter((s: string) => s),
+    //         })),
+    //
+    //         details: safeArr<KeyBenefit>(item?.key_benefit)
+    //             .filter((kb) => kb?.cate?.idx !== 28)
+    //             .map((kb) => ({
+    //                 title: kb?.title ?? kb?.cate?.name ?? null, // 타이틀 없으면 cate.name 보조
+    //                 info_html: kb?.info ?? "",
+    //                 comment: kb?.comment ?? "",
+    //             })),
+    //     },
+    //
+    //     notes: safeArr<KeyBenefit>(item?.key_benefit)
+    //         .filter((kb) => kb?.cate?.idx === 28)
+    //         .map((kb) => ({
+    //             title: kb?.title ?? kb?.cate?.name ?? null, // 타이틀 없으면 cate.name 보조
+    //             info_html: kb?.info ?? "",
+    //             comment: kb?.comment ?? "",
+    //         })),
+    // };
+    //
+    // // Data 저장
+    // const fileName = `${item.idx}-${item.name}.json`;
+    //
+    // fs.writeFileSync(
+    //     path.join(outputCardDataDir, fileName),
+    //     JSON.stringify(processedData, null, 2),
+    //     "utf-8"
+    // );
 
     // 대표 이미지 저장
     // (async () => {

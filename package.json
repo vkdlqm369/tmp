@@ -6,6 +6,7 @@
     "dependencies": {
         "crawlee": "^3.14.1",
         "he": "^1.2.0",
+        "prisma": "^6.15.0",
         "sharp": "^0.34.3"
     },
     "scripts": {
