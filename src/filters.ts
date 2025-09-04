@@ -2,11 +2,9 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import sharp from "sharp";
-import he from "he";
 
 import {IRawCardData, KeyBenefit, SearchBenefit, TopBenefit} from "./interfaces/IRawCardData";
 import { IProcessedCardData} from "./interfaces/IProcessedCardData";
-import output from "string-comparison";
 
 const issuerMap: Record<number, string> = {
     1: "SAMSUNG",
@@ -130,7 +128,8 @@ async function downloadRotateAndSave(url: string, destPath: string ) {
 
 export const extractData = (item: IRawCardData): any => {
 
-    const annualFeeWithEdgeCase = item.annual_fee_basic.replace("해외전용", "해외겸용");
+    const annualFeeWithEdgeCase = item.annual_fee_basic.replace("해외전용", "해외겸용").replace("국내외겸용", "해외겸용");
+
 
     const domesticMatch = annualFeeWithEdgeCase.match(/국내전용\s*\[([0-9,]+)원?\]/);
     const domestic = (domesticMatch) ? parseInt(domesticMatch[1].replace(/,/g, ""), 10) : null;
@@ -206,18 +205,18 @@ export const extractData = (item: IRawCardData): any => {
     );
 
     // 대표 이미지 저장
-    (async () => {
-        if (!Array.isArray(item.card_img)) {
-            await downloadRotateAndSave(item.card_img.url,   outputCardImageDir + '/' +`${item.idx.toString()}card_0${path.extname(item.card_img.name)}`);
-        }
-    })();
-
-    // 상세 이미지 저장
-    (async () => {
-        for(const [suf ,tb] of item.card_imgs.entries()) {
-            await downloadRotateAndSave(tb.url,   outputCardImageDir + '/' +`${item.idx.toString()}card_${suf+1}${path.extname(tb.name)}`);
-        }
-    })();
+    // (async () => {
+    //     if (!Array.isArray(item.card_img)) {
+    //         await downloadRotateAndSave(item.card_img.url,   outputCardImageDir + '/' +`${item.idx.toString()}card_0${path.extname(item.card_img.name)}`);
+    //     }
+    // })();
+    //
+    // // 상세 이미지 저장
+    // (async () => {
+    //     for(const [suf ,tb] of item.card_imgs.entries()) {
+    //         await downloadRotateAndSave(tb.url,   outputCardImageDir + '/' +`${item.idx.toString()}card_${suf+1}${path.extname(tb.name)}`);
+    //     }
+    // })();
 };
 
 

@@ -1,4 +1,3 @@
-// For more information, see https://crawlee.dev/
 import { CheerioCrawler, Configuration } from 'crawlee';
 import { router } from './routes';
 

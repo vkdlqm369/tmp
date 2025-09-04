@@ -1,8 +1,6 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import he from "he";
-import {aborted} from "node:util";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -83,9 +81,18 @@ for (const file of files) {
                     counts.OTHER++;
                 }
 
+                let ccc = 0;
+                for (const kb of item.key_benefit){
 
+                    if(kb.cate.idx === 28)
+                        ccc++;
+                }
 
-                console.log(item.idx, item.annual_fee_basic);
+                if(ccc > 1){
+                    console.log(item.idx);
+                }
+
+                // console.log(item.idx, item.annual_fee_basic);
 
                 // // 국내전용 금액
                 // let domestic = 0;

@@ -1,6 +1,4 @@
 import { createCheerioRouter, type CheerioCrawlingContext } from 'crawlee';
-import fs from 'node:fs';
-import path from 'node:path';
 import {extractData} from './filters';
 
 import { IRawCardData } from "./interfaces/IRawCardData";

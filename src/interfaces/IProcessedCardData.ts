@@ -35,7 +35,6 @@ export interface IProcessedCardData {
     globalAcquirers: string[];
     targetMonthlySpending: number;
     onlyOnline: boolean;
-    // null 대신 -> "없음"
     annualFee: number | null;
     annualFeeInternational: number | null;
     annualFeeDetail: string | null;
